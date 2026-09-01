@@ -312,7 +312,7 @@
         });
         
         // ============================================================
-        // СОХРАНЕНИЕ
+        // СОХРАНЕНИЕ (через no-cors)
         // ============================================================
         saveBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
@@ -346,35 +346,28 @@
                     photo: currentPhotoBase64
                 };
                 
-                const response = await fetch(SCRIPT_URL, {
+                // Используем mode: 'no-cors' для обхода CORS
+                await fetch(SCRIPT_URL, {
                     method: 'POST',
+                    mode: 'no-cors',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify(payload)
                 });
                 
-                if (!response.ok) {
-                    throw new Error('Сервер вернул ошибку ' + response.status);
-                }
+                // При no-cors мы не можем прочитать ответ, но запрос уходит!
+                showSuccess('✅ Отправлено! Проверь таблицу через 5 секунд.');
                 
-                const result = await response.json();
+                // Очищаем форму
+                nameInput.value = '';
+                cellInput.value = '';
+                photoPreview.style.display = 'none';
+                currentPhotoBase64 = '';
+                fileInput.value = '';
                 
-                if (result.success) {
-                    showSuccess('🎉 Успешно сохранено! ID: ' + (result.data?.id || 'OK'));
-                    
-                    // Очищаем форму
-                    nameInput.value = '';
-                    cellInput.value = '';
-                    photoPreview.style.display = 'none';
-                    currentPhotoBase64 = '';
-                    fileInput.value = '';
-                    
-                    // Обновляем список
-                    await loadInventory();
-                } else {
-                    showError(result.error || 'Неизвестная ошибка');
-                }
+                // Обновляем список через 5 секунд
+                setTimeout(loadInventory, 5000);
                 
             } catch (error) {
                 showError('Ошибка: ' + error.message);
@@ -393,7 +386,7 @@
             countBadge.textContent = '';
             
             try {
-                const response = await fetch(SCRIPT_URL);
+                const response = await fetch(SCRIPT_URL + '?t=' + Date.now());
                 
                 if (!response.ok) {
                     throw new Error('Ошибка загрузки: ' + response.status);
