@@ -302,9 +302,9 @@
         });
         
         // ============================================================
-        // СОХРАНЕНИЕ (через JSONP)
+        // СОХРАНЕНИЕ (через fetch с no-cors)
         // ============================================================
-        saveBtn.addEventListener('click', () => {
+        saveBtn.addEventListener('click', async () => {
             const name = nameInput.value.trim();
             const cell = cellInput.value.trim();
             
@@ -329,53 +329,40 @@
             saveBtn.textContent = '⏳ Отправка...';
             showStatus('⏳ Отправка на облачный склад...', 'loading');
             
-            // Создаем форму и отправляем через POST с JSONP
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = SCRIPT_URL;
-            form.target = 'hiddenFrame';
-            
-            // Создаем скрытый iframe для отправки
-            const iframe = document.createElement('iframe');
-            iframe.name = 'hiddenFrame';
-            iframe.style.display = 'none';
-            document.body.appendChild(iframe);
-            
-            // Добавляем поля с данными
-            const fields = {
-                name: name,
-                cell: cell,
-                photo: currentPhotoBase64
-            };
-            
-            for (const [key, value] of Object.entries(fields)) {
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.name = key; // Здесь ошибка: свойство не всегда корректно преобразуется в атрибут при такой сборке формы
-                input.value = value;
-                form.appendChild(input);
+            try {
+                const payload = {
+                    name: name,
+                    cell: cell,
+                    photo: currentPhotoBase64
+                };
+                
+                // Отправляем через fetch с no-cors
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                // При no-cors мы не можем прочитать ответ, но запрос уходит!
+                showSuccess('✅ Отправлено! Проверь таблицу через 5 секунд.');
+                
+                // Очищаем форму
+                nameInput.value = '';
+                cellInput.value = '';
+                photoPreview.style.display = 'none';
+                currentPhotoBase64 = '';
+                fileInput.value = '';
+                
+                // Обновляем список через 5 секунд
+                setTimeout(loadInventoryJsonp, 5000);
+                
+            } catch (error) {
+                showError('Ошибка: ' + error.message);
+                console.error('Детали ошибки:', error);
             }
-            
-            document.body.appendChild(form);
-            
-            // Отправляем форму
-            form.submit();
-            
-            // Очищаем
-            setTimeout(() => {
-                document.body.removeChild(form);
-                document.body.removeChild(iframe);
-            }, 1000);
-            
-            showSuccess('✅ Отправлено! Проверь таблицу через 5 секунд.');
-            
-            nameInput.value = '';
-            cellInput.value = '';
-            photoPreview.style.display = 'none';
-            currentPhotoBase64 = '';
-            fileInput.value = '';
-            
-            setTimeout(loadInventoryJsonp, 5000);
             
             saveBtn.disabled = false;
             saveBtn.textContent = '💾 Сохранить на склад';
@@ -394,7 +381,7 @@
             
             window[callbackName] = function(data) {
                 delete window[callbackName];
-                document.body.removeChild(script);
+                if (script.parentNode) script.parentNode.removeChild(script);
                 
                 if (!data || !data.success) {
                     inventoryDiv.innerHTML = `
@@ -452,7 +439,7 @@
             setTimeout(() => {
                 if (window[callbackName]) {
                     delete window[callbackName];
-                    document.body.removeChild(script);
+                    if (script.parentNode) script.parentNode.removeChild(script);
                     inventoryDiv.innerHTML = `
                         <div class="empty-state">
                             <span class="icon">⏰</span>
@@ -461,13 +448,14 @@
                         </div>
                     `;
                 }
-            }, 10000);
+            }, 15000);
         }
         
         // ============================================================
         // ЗАЩИТА ОТ XSS
         // ============================================================
         function escapeHtml(text) {
+            if (!text) return '';
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
