@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Мой Склад</title>
+    <style>
+        /* Простой стиль для мобильного телефона */
+        body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 10px; margin: 0; }
+        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input, button { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
+        button.camera { background: #28a745; }
+        button.danger { background: #dc3545; }
+        .photo-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; margin: 10px 0; }
+        .item { border-bottom: 1px solid #eee; padding: 10px 0; display: flex; align-items: center; gap: 10px; }
+        .item img { width: 50px; height: 50px; border-radius: 5px; object-fit: cover; }
+        .item div { flex: 1; }
+        .cell-badge { background: #ffc107; padding: 3px 8px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        #loading { text-align: center; color: #666; }
+    </style>
+</head>
+<body>
+
+    <h2>📦 Учет склада</h2>
+
+    <!-- Форма добавления -->
+    <div class="card">
+        <h3>➕ Добавить хрень</h3>
+        <input type="text" id="itemName" placeholder="Что это? (Например: Дрель)">
+        <input type="text" id="itemCell" placeholder="Где искать? (Например: Стеллаж-1/Верх)">
+        <button class="camera" id="takePhotoBtn">📸 Сделать фото</button>
+        <input type="file" id="fileInput" accept="image/*" style="display:none;">
+        <img id="photoPreview" class="photo-preview" style="display:none;" />
+        <button id="saveBtn">💾 Сохранить на склад</button>
+        <div id="statusMessage" style="color: green; margin-top: 10px;"></div>
+    </div>
+
+    <!-- Список всего, что есть -->
+    <div class="card">
+        <h3>📋 Вся хрень на складе</h3>
+        <div id="inventoryList">Загрузка...</div>
+        <button id="refreshBtn" style="background: #6c757d;">🔄 Обновить список</button>
+    </div>
+
+    <script>
+        // ----------- НАСТРОЙКА ----------
+        // СЮДА ВСТАВЬ ССЫЛКУ НА ТВОЙ GOOGLE APPS SCRIPT (ВЕБ-ПРИЛОЖЕНИЕ)
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_8L2DkxBVJOiqGYqRn3HRybPP08SLDVkvaiDY5jg2efz2lTDs5uGZn2C0zTBbfaYr/exec'; 
+
+        // ----------- ПЕРЕМЕННЫЕ ----------
+        let currentPhotoBase64 = '';
+        
+        // ----------- ЭЛЕМЕНТЫ ----------
+        const nameInput = document.getElementById('itemName');
+        const cellInput = document.getElementById('itemCell');
+        const photoPreview = document.getElementById('photoPreview');
+        const fileInput = document.getElementById('fileInput');
+        const takePhotoBtn = document.getElementById('takePhotoBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const statusMsg = document.getElementById('statusMessage');
+        const inventoryDiv = document.getElementById('inventoryList');
+
+        // ----------- РАБОТА С КАМЕРОЙ ----------
+        // Нажимаем "Сделать фото" -> эмулируем клик по выбору файла (на телефоне предложит камеру)
+        takePhotoBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Когда выбрали фото (или сделали снимок)
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // Получаем base64 строку без префикса (для отправки)
+                const base64String = e.target.result.split(',')[1];
+                currentPhotoBase64 = base64String;
+                
+                // Показываем превью
+                photoPreview.src = e.target.result;
+                photoPreview.style.display = 'block';
+                statusMsg.innerHTML = '✅ Фото готово!';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // ----------- СОХРАНЕНИЕ ----------
+        saveBtn.addEventListener('click', async () => {
+            const name = nameInput.value.trim();
+            const cell = cellInput.value.trim();
+
+            if (!name || !cell) {
+                alert('Заполни название и ячейку!');
+                return;
+            }
+
+            if (!currentPhotoBase64) {
+                alert('Сделай фото!');
+                return;
+            }
+
+            saveBtn.disabled = true;
+            statusMsg.innerHTML = '⏳ Отправка на облачный склад...';
+
+            try {
+                const payload = {
+                    name: name,
+                    cell: cell,
+                    photo: currentPhotoBase64 // Шлем картинку
+                };
+
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Обязательно для Google Scripts
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                // Из-за no-cors мы не можем прочитать ответ, поэтому просто считаем что ок.
+                statusMsg.innerHTML = '🎉 Успешно добавлено! Фото сохранено в Google Drive.';
+                // Очищаем форму
+                nameInput.value = '';
+                cellInput.value = '';
+                photoPreview.style.display = 'none';
+                currentPhotoBase64 = '';
+                fileInput.value = ''; // Сбрасываем инпут
+                loadInventory(); // Обновляем список
+
+            } catch (error) {
+                statusMsg.innerHTML = '❌ Ошибка: ' + error.message;
+            }
+            saveBtn.disabled = false;
+        });
+
+        // ----------- ЗАГРУЗКА СПИСКА (GET) ----------
+        async function loadInventory() {
+            inventoryDiv.innerHTML = '⏳ Загружаю список...';
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                
+                if (data.length === 0) {
+                    inventoryDiv.innerHTML = 'Склад пуст. Добавь первую хрень!';
+                    return;
+                }
+
+                // Рендерим список
+                let html = '';
+                // Идем с конца (чтобы новые были сверху)
+                for (let i = data.length - 1; i >= 0; i--) {
+                    const item = data[i];
+                    // Проверяем, есть ли ссылка на фото
+                    const imgHtml = item['Ссылка на фото'] ? `<img src="${item['Ссылка на фото']}" alt="фото" />` : '<div style="width:50px;height:50px;background:#ddd;border-radius:5px;display:flex;align-items:center;justify-content:center;">📷</div>';
+                    
+                    html += `
+                        <div class="item">
+                            ${imgHtml}
+                            <div>
+                                <strong>${item['Название'] || 'Без имени'}</strong><br>
+                                <span class="cell-badge">📍 ${item['Ячейка'] || 'Не указана'}</span>
+                                <span style="font-size:10px; color:gray; display:block;">${item['Дата добавления'] || ''}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                inventoryDiv.innerHTML = html;
+
+            } catch (error) {
+                inventoryDiv.innerHTML = '❌ Ошибка загрузки. Проверь интернет.';
+                console.error(error);
+            }
+        }
+
+        // ----------- КНОПКА ОБНОВИТЬ ----------
+        document.getElementById('refreshBtn').addEventListener('click', loadInventory);
+
+        // ----------- СТАРТ ----------
+        loadInventory();
+        
+        // Подсказка по настройке
+        if (SCRIPT_URL.includes('ТВОЙ_ИД_СКРИПТА')) {
+            inventoryDiv.innerHTML = '⚠️ Сначала настрой SCRIPT_URL в коде (строка 63). <br> Не забудь опубликовать скрипт как веб-приложение.';
+        }
+
+    </script>
+</body>
+</html>
