@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Мой Склад</title>
     <style>
-        /* Базовые стили для мобильного телефона */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -93,10 +92,6 @@
         
         button.camera:active {
             background: #218838;
-        }
-        
-        button.danger {
-            background: #dc3545;
         }
         
         button.refresh {
@@ -265,10 +260,6 @@
             }
         }
         
-        function showLoading(message) {
-            showStatus(message || '⏳ Загрузка...', 'loading');
-        }
-        
         function showSuccess(message) {
             showStatus(message || '✅ Успешно!', 'success');
         }
@@ -288,7 +279,6 @@
             const file = event.target.files[0];
             if (!file) return;
             
-            // Проверка размера (максимум 10MB)
             if (file.size > 10 * 1024 * 1024) {
                 showError('Файл слишком большой (макс. 10MB)');
                 fileInput.value = '';
@@ -312,9 +302,9 @@
         });
         
         // ============================================================
-        // СОХРАНЕНИЕ (через no-cors)
+        // СОХРАНЕНИЕ (через JSONP)
         // ============================================================
-        saveBtn.addEventListener('click', async () => {
+        saveBtn.addEventListener('click', () => {
             const name = nameInput.value.trim();
             const cell = cellInput.value.trim();
             
@@ -337,70 +327,87 @@
             
             saveBtn.disabled = true;
             saveBtn.textContent = '⏳ Отправка...';
-            showLoading('Отправка на облачный склад...');
+            showStatus('⏳ Отправка на облачный склад...', 'loading');
             
-            try {
-                const payload = {
-                    name: name,
-                    cell: cell,
-                    photo: currentPhotoBase64
-                };
-                
-                // Используем mode: 'no-cors' для обхода CORS
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                // При no-cors мы не можем прочитать ответ, но запрос уходит!
-                showSuccess('✅ Отправлено! Проверь таблицу через 5 секунд.');
-                
-                // Очищаем форму
-                nameInput.value = '';
-                cellInput.value = '';
-                photoPreview.style.display = 'none';
-                currentPhotoBase64 = '';
-                fileInput.value = '';
-                
-                // Обновляем список через 5 секунд
-                setTimeout(loadInventory, 5000);
-                
-            } catch (error) {
-                showError('Ошибка: ' + error.message);
-                console.error('Детали ошибки:', error);
+            // Создаем форму и отправляем через POST с JSONP
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = SCRIPT_URL;
+            form.target = 'hiddenFrame';
+            
+            // Создаем скрытый iframe для отправки
+            const iframe = document.createElement('iframe');
+            iframe.name = 'hiddenFrame';
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            
+            // Добавляем поля с данными
+            const fields = {
+                name: name,
+                cell: cell,
+                photo: currentPhotoBase64
+            };
+            
+            for (const [key, value] of Object.entries(fields)) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
             }
+            
+            document.body.appendChild(form);
+            
+            // Отправляем форму
+            form.submit();
+            
+            // Очищаем
+            setTimeout(() => {
+                document.body.removeChild(form);
+                document.body.removeChild(iframe);
+            }, 1000);
+            
+            showSuccess('✅ Отправлено! Проверь таблицу через 5 секунд.');
+            
+            nameInput.value = '';
+            cellInput.value = '';
+            photoPreview.style.display = 'none';
+            currentPhotoBase64 = '';
+            fileInput.value = '';
+            
+            setTimeout(loadInventoryJsonp, 5000);
             
             saveBtn.disabled = false;
             saveBtn.textContent = '💾 Сохранить на склад';
         });
         
         // ============================================================
-        // ЗАГРУЗКА СПИСКА
+        // ЗАГРУЗКА СПИСКА (JSONP - обход CORS)
         // ============================================================
-        async function loadInventory() {
+        function loadInventoryJsonp() {
             inventoryDiv.innerHTML = '⏳ Загружаю список...';
             countBadge.textContent = '';
             
-            try {
-                const response = await fetch(SCRIPT_URL + '?t=' + Date.now());
+            const callbackName = 'jsonpCallback_' + Date.now();
+            const script = document.createElement('script');
+            script.src = SCRIPT_URL + '?callback=' + callbackName + '&t=' + Date.now();
+            
+            window[callbackName] = function(data) {
+                delete window[callbackName];
+                document.body.removeChild(script);
                 
-                if (!response.ok) {
-                    throw new Error('Ошибка загрузки: ' + response.status);
+                if (!data || !data.success) {
+                    inventoryDiv.innerHTML = `
+                        <div class="empty-state">
+                            <span class="icon">⚠️</span>
+                            Ошибка: ${data ? data.error : 'Нет данных'}
+                        </div>
+                    `;
+                    return;
                 }
                 
-                const result = await response.json();
-                
-                if (!result.success) {
-                    throw new Error(result.error || 'Ошибка получения данных');
-                }
-                
-                const data = result.data || [];
-                
-                if (data.length === 0) {
+                const items = data.data || [];
+                if (items.length === 0) {
                     inventoryDiv.innerHTML = `
                         <div class="empty-state">
                             <span class="icon">📭</span>
@@ -412,13 +419,11 @@
                     return;
                 }
                 
-                countBadge.textContent = data.length;
+                countBadge.textContent = items.length;
                 
                 let html = '';
-                // Показываем новые записи сверху
-                for (let i = data.length - 1; i >= 0; i--) {
-                    const item = data[i];
-                    
+                for (let i = items.length - 1; i >= 0; i--) {
+                    const item = items[i];
                     const name = item['Название'] || 'Без имени';
                     const cell = item['Ячейка'] || 'Не указана';
                     const date = item['Дата добавления'] || '';
@@ -440,18 +445,23 @@
                     `;
                 }
                 inventoryDiv.innerHTML = html;
-                
-            } catch (error) {
-                inventoryDiv.innerHTML = `
-                    <div class="empty-state">
-                        <span class="icon">⚠️</span>
-                        Ошибка загрузки<br>
-                        <span style="font-size:13px;">Проверь интернет и нажми "Обновить"</span>
-                    </div>
-                `;
-                showError('Ошибка загрузки: ' + error.message);
-                console.error('Ошибка загрузки:', error);
-            }
+            };
+            
+            document.body.appendChild(script);
+            
+            setTimeout(() => {
+                if (window[callbackName]) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    inventoryDiv.innerHTML = `
+                        <div class="empty-state">
+                            <span class="icon">⏰</span>
+                            Таймаут загрузки<br>
+                            <span style="font-size:13px;">Проверь интернет и нажми "Обновить"</span>
+                        </div>
+                    `;
+                }
+            }, 10000);
         }
         
         // ============================================================
@@ -466,22 +476,19 @@
         // ============================================================
         // ОБНОВЛЕНИЕ
         // ============================================================
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            loadInventory();
-        });
+        document.getElementById('refreshBtn').addEventListener('click', loadInventoryJsonp);
         
         // ============================================================
         // ЗАПУСК
         // ============================================================
-        loadInventory();
+        loadInventoryJsonp();
         
-        // Если URL скрипта не настроен
         if (SCRIPT_URL.includes('ТВОЙ_ИД_СКРИПТА')) {
             inventoryDiv.innerHTML = `
                 <div class="empty-state">
                     <span class="icon">⚙️</span>
                     Настройка<br>
-                    <span style="font-size:13px;">Вставь SCRIPT_URL в код (строка 170)</span>
+                    <span style="font-size:13px;">Вставь SCRIPT_URL в код</span>
                 </div>
             `;
         }
