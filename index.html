@@ -1,16 +1,21 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
     <title>Мой Склад</title>
+
     <style>
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             background: #f0f2f5;
@@ -18,22 +23,22 @@
             padding-bottom: 30px;
             min-height: 100vh;
         }
-        
+
         .header {
             text-align: center;
             margin-bottom: 20px;
             color: #1a1a2e;
         }
-        
+
         .header h2 {
             font-size: 24px;
         }
-        
+
         .header p {
             color: #666;
             font-size: 14px;
         }
-        
+
         .card {
             background: white;
             padding: 18px;
@@ -41,7 +46,7 @@
             margin-bottom: 16px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
-        
+
         .card h3 {
             font-size: 18px;
             margin-bottom: 12px;
@@ -50,8 +55,9 @@
             align-items: center;
             gap: 8px;
         }
-        
-        input, button {
+
+        input,
+        button {
             width: 100%;
             padding: 14px;
             margin: 6px 0;
@@ -61,13 +67,13 @@
             box-sizing: border-box;
             transition: all 0.2s;
         }
-        
+
         input:focus {
             outline: none;
             border-color: #007bff;
             box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
         }
-        
+
         button {
             background: #007bff;
             color: white;
@@ -76,60 +82,70 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        
+
         button:active {
             transform: scale(0.97);
         }
-        
+
         button:disabled {
             opacity: 0.6;
             transform: none;
+            cursor: wait;
         }
-        
+
         button.camera {
             background: #28a745;
         }
-        
+
         button.camera:active {
             background: #218838;
         }
-        
+
         button.refresh {
             background: #6c757d;
         }
-        
+
         .photo-preview {
             width: 100%;
-            max-height: 220px;
-            object-fit: cover;
+            max-height: 240px;
+            object-fit: contain;
             border-radius: 12px;
             margin: 10px 0;
             border: 1px solid #eee;
+            background: #f7f7f7;
         }
-        
+
+        .photo-info {
+            font-size: 12px;
+            color: #777;
+            text-align: center;
+            margin-top: 4px;
+        }
+
         .status-message {
             margin-top: 10px;
             padding: 10px;
             border-radius: 8px;
             font-weight: 500;
             text-align: center;
+            word-break: break-word;
         }
-        
+
         .status-success {
             background: #d4edda;
             color: #155724;
         }
-        
+
         .status-error {
             background: #f8d7da;
             color: #721c24;
         }
-        
+
         .status-loading {
             background: #fff3cd;
             color: #856404;
         }
-        
+
         .inventory-item {
             border-bottom: 1px solid #f0f0f0;
             padding: 12px 0;
@@ -137,11 +153,11 @@
             align-items: center;
             gap: 12px;
         }
-        
+
         .inventory-item:last-child {
             border-bottom: none;
         }
-        
+
         .inventory-item img {
             width: 60px;
             height: 60px;
@@ -150,19 +166,31 @@
             background: #f0f2f5;
             flex-shrink: 0;
         }
-        
+
+        .image-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
         .inventory-item .info {
             flex: 1;
             min-width: 0;
         }
-        
+
         .inventory-item .name {
             font-weight: 600;
             font-size: 16px;
             color: #1a1a2e;
             word-break: break-word;
         }
-        
+
         .inventory-item .cell {
             display: inline-block;
             background: #fff3cd;
@@ -173,27 +201,40 @@
             font-weight: 600;
             margin-top: 4px;
         }
-        
+
         .inventory-item .date {
             font-size: 11px;
             color: #999;
             margin-top: 3px;
             display: block;
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 30px 0;
             color: #999;
         }
-        
+
         .empty-state .icon {
             font-size: 48px;
             display: block;
             margin-bottom: 10px;
         }
+
+        .debug {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #f5f5f5;
+            color: #666;
+            font-size: 11px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="header">
@@ -203,283 +244,1790 @@
 
     <!-- Форма добавления -->
     <div class="card">
+
         <h3>➕ Добавить хрень</h3>
-        <input type="text" id="itemName" placeholder="Что это? (Например: Дрель Макита)">
-        <input type="text" id="itemCell" placeholder="Где искать? (Например: Стеллаж-3/Верх)">
-        <button class="camera" id="takePhotoBtn">📸 Сделать фото</button>
-        <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none;">
-        <img id="photoPreview" class="photo-preview" style="display:none;" />
-        <button id="saveBtn">💾 Сохранить на склад</button>
-        <div id="statusMessage" class="status-message" style="display:none;"></div>
+
+        <input
+            type="text"
+            id="itemName"
+            placeholder="Что это? (Например: Дрель Макита)"
+        >
+
+        <input
+            type="text"
+            id="itemCell"
+            placeholder="Где искать? (Например: Стеллаж-3/Верх)"
+        >
+
+        <button
+            class="camera"
+            id="takePhotoBtn"
+            type="button"
+        >
+            📸 Сделать фото
+        </button>
+
+        <input
+            type="file"
+            id="fileInput"
+            accept="image/*"
+            capture="environment"
+            style="display:none;"
+        >
+
+        <img
+            id="photoPreview"
+            class="photo-preview"
+            style="display:none;"
+            alt="Предпросмотр"
+        >
+
+        <div
+            id="photoInfo"
+            class="photo-info"
+            style="display:none;"
+        ></div>
+
+        <button
+            id="saveBtn"
+            type="button"
+        >
+            💾 Сохранить на склад
+        </button>
+
+        <div
+            id="statusMessage"
+            class="status-message"
+            style="display:none;"
+        ></div>
+
+        <div id="debugBox" class="debug"></div>
     </div>
 
     <!-- Список -->
     <div class="card">
+
         <h3>
             📋 Вся хрень на складе
-            <span id="countBadge" style="margin-left:auto;font-size:14px;color:#666;font-weight:400;"></span>
+
+            <span
+                id="countBadge"
+                style="
+                    margin-left:auto;
+                    font-size:14px;
+                    color:#666;
+                    font-weight:400;
+                "
+            ></span>
         </h3>
-        <div id="inventoryList">Загрузка...</div>
-        <button class="refresh" id="refreshBtn" style="margin-top:12px;">🔄 Обновить список</button>
+
+        <div id="inventoryList">
+            ⏳ Загрузка...
+        </div>
+
+        <button
+            class="refresh"
+            id="refreshBtn"
+            type="button"
+            style="margin-top:12px;"
+        >
+            🔄 Обновить список
+        </button>
+
     </div>
 
     <script>
+
         // ============================================================
         // НАСТРОЙКА
         // ============================================================
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyX5EdumYWkTDokp2mCIUuo1h9-DGuXyEf0dFYakSFr6ROps6EhTAdh17jprlaA7sLM/exec';
-        
+
+        const SCRIPT_URL =
+            'https://script.google.com/macros/s/AKfycbxZuZ3RyVbZjxLOSfxAm7Tj4MGDs6qxCiRRr8rAk1720lBHu1NsWdXpYi4sQvcQIhs/exec';
+
+
         // ============================================================
         // ЭЛЕМЕНТЫ
         // ============================================================
-        const nameInput = document.getElementById('itemName');
-        const cellInput = document.getElementById('itemCell');
-        const photoPreview = document.getElementById('photoPreview');
-        const fileInput = document.getElementById('fileInput');
-        const takePhotoBtn = document.getElementById('takePhotoBtn');
-        const saveBtn = document.getElementById('saveBtn');
-        const statusMsg = document.getElementById('statusMessage');
-        const inventoryDiv = document.getElementById('inventoryList');
-        const countBadge = document.getElementById('countBadge');
-        
+
+        const nameInput =
+            document.getElementById('itemName');
+
+        const cellInput =
+            document.getElementById('itemCell');
+
+        const photoPreview =
+            document.getElementById('photoPreview');
+
+        const photoInfo =
+            document.getElementById('photoInfo');
+
+        const fileInput =
+            document.getElementById('fileInput');
+
+        const takePhotoBtn =
+            document.getElementById('takePhotoBtn');
+
+        const saveBtn =
+            document.getElementById('saveBtn');
+
+        const statusMsg =
+            document.getElementById('statusMessage');
+
+        const inventoryDiv =
+            document.getElementById('inventoryList');
+
+        const countBadge =
+            document.getElementById('countBadge');
+
+        const refreshBtn =
+            document.getElementById('refreshBtn');
+
+        const debugBox =
+            document.getElementById('debugBox');
+
+
+        // ============================================================
+        // СОСТОЯНИЕ
+        // ============================================================
+
         let currentPhotoBase64 = '';
-        
+
+        let currentPhotoDataUrl = '';
+
+        let photoOriginalSize = 0;
+
+        let photoCompressedSize = 0;
+
+        let isSaving = false;
+
+        let currentLoadScript = null;
+
+        let currentCallbackName = null;
+
+
         // ============================================================
-        // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+        // СТАТУС
         // ============================================================
+
         function showStatus(message, type) {
+
             statusMsg.textContent = message;
-            statusMsg.className = 'status-message';
-            if (type) statusMsg.classList.add('status-' + type);
-            statusMsg.style.display = 'block';
-            
-            if (type === 'success' || type === 'error') {
-                setTimeout(() => {
-                    statusMsg.style.display = 'none';
-                }, 5000);
+
+            statusMsg.className =
+                'status-message';
+
+            if (type) {
+                statusMsg.classList.add(
+                    'status-' + type
+                );
             }
+
+            statusMsg.style.display =
+                'block';
         }
-        
+
+
         function showSuccess(message) {
-            showStatus(message || '✅ Успешно!', 'success');
+
+            showStatus(
+                message || '✅ Успешно!',
+                'success'
+            );
         }
-        
+
+
         function showError(message) {
-            showStatus('❌ ' + message, 'error');
+
+            showStatus(
+                '❌ ' + message,
+                'error'
+            );
         }
-        
+
+
+        function setDebug(message) {
+
+            // Для включения отладки поменяй display:none
+            // у .debug на display:block
+
+            debugBox.textContent =
+                message || '';
+        }
+
+
         // ============================================================
-        // РАБОТА С КАМЕРОЙ
+        // РАЗМЕР ФАЙЛА
         // ============================================================
-        takePhotoBtn.addEventListener('click', () => {
-            fileInput.click();
-        });
-        
-        fileInput.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            if (file.size > 10 * 1024 * 1024) {
-                showError('Файл слишком большой (макс. 10MB)');
-                fileInput.value = '';
-                return;
+
+        function formatBytes(bytes) {
+
+            if (
+                !bytes ||
+                bytes <= 0
+            ) {
+                return '0 Б';
             }
-            
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const base64String = e.target.result.split(',')[1];
-                currentPhotoBase64 = base64String;
-                
-                photoPreview.src = e.target.result;
-                photoPreview.style.display = 'block';
-                showSuccess('✅ Фото готово!');
-            };
-            reader.onerror = () => {
-                showError('Не удалось прочитать файл');
-                fileInput.value = '';
-            };
-            reader.readAsDataURL(file);
-        });
-        
+
+            const units = [
+                'Б',
+                'КБ',
+                'МБ',
+                'ГБ'
+            ];
+
+            const i =
+                Math.floor(
+                    Math.log(bytes) /
+                    Math.log(1024)
+                );
+
+            return (
+                (
+                    bytes /
+                    Math.pow(1024, i)
+                ).toFixed(
+                    i === 0 ? 0 : 1
+                )
+                + ' ' +
+                units[i]
+            );
+        }
+
+
         // ============================================================
-        // СОХРАНЕНИЕ (через fetch с no-cors)
+        // КАМЕРА
         // ============================================================
-        saveBtn.addEventListener('click', async () => {
-            const name = nameInput.value.trim();
-            const cell = cellInput.value.trim();
-            
-            if (!name) {
-                showError('Введите название!');
-                nameInput.focus();
-                return;
+
+        takePhotoBtn.addEventListener(
+            'click',
+            function() {
+
+                if (isSaving) {
+                    return;
+                }
+
+                fileInput.click();
             }
-            
-            if (!cell) {
-                showError('Введите ячейку!');
-                cellInput.focus();
-                return;
+        );
+
+
+        // ============================================================
+        // СЖАТИЕ ФОТО
+        // ============================================================
+
+        function compressImage(file) {
+
+            return new Promise(
+                function(resolve, reject) {
+
+                    const reader =
+                        new FileReader();
+
+                    reader.onload =
+                        function(event) {
+
+                            const img =
+                                new Image();
+
+                            img.onload =
+                                function() {
+
+                                    try {
+
+                                        const MAX_SIZE =
+                                            1600;
+
+                                        let width =
+                                            img.naturalWidth;
+
+                                        let height =
+                                            img.naturalHeight;
+
+
+                                        if (
+                                            width > MAX_SIZE ||
+                                            height > MAX_SIZE
+                                        ) {
+
+                                            if (
+                                                width >= height
+                                            ) {
+
+                                                height =
+                                                    Math.round(
+                                                        height *
+                                                        MAX_SIZE /
+                                                        width
+                                                    );
+
+                                                width =
+                                                    MAX_SIZE;
+
+                                            } else {
+
+                                                width =
+                                                    Math.round(
+                                                        width *
+                                                        MAX_SIZE /
+                                                        height
+                                                    );
+
+                                                height =
+                                                    MAX_SIZE;
+                                            }
+                                        }
+
+
+                                        const canvas =
+                                            document.createElement(
+                                                'canvas'
+                                            );
+
+
+                                        canvas.width =
+                                            width;
+
+                                        canvas.height =
+                                            height;
+
+
+                                        const ctx =
+                                            canvas.getContext(
+                                                '2d'
+                                            );
+
+
+                                        ctx.fillStyle =
+                                            '#ffffff';
+
+                                        ctx.fillRect(
+                                            0,
+                                            0,
+                                            width,
+                                            height
+                                        );
+
+
+                                        ctx.drawImage(
+                                            img,
+                                            0,
+                                            0,
+                                            width,
+                                            height
+                                        );
+
+
+                                        const dataUrl =
+                                            canvas.toDataURL(
+                                                'image/jpeg',
+                                                0.75
+                                            );
+
+
+                                        const comma =
+                                            dataUrl.indexOf(',');
+
+
+                                        if (
+                                            comma < 0
+                                        ) {
+
+                                            reject(
+                                                new Error(
+                                                    'Не удалось получить JPEG'
+                                                )
+                                            );
+
+                                            return;
+                                        }
+
+
+                                        const base64 =
+                                            dataUrl.substring(
+                                                comma + 1
+                                            );
+
+
+                                        const estimatedSize =
+                                            Math.floor(
+                                                base64.length *
+                                                3 /
+                                                4
+                                            );
+
+
+                                        resolve({
+
+                                            dataUrl:
+                                                dataUrl,
+
+                                            base64:
+                                                base64,
+
+                                            width:
+                                                width,
+
+                                            height:
+                                                height,
+
+                                            size:
+                                                estimatedSize
+                                        });
+
+
+                                    } catch (error) {
+
+                                        reject(error);
+                                    }
+                                };
+
+
+                            img.onerror =
+                                function() {
+
+                                    reject(
+                                        new Error(
+                                            'Не удалось открыть изображение'
+                                        )
+                                    );
+                                };
+
+
+                            img.src =
+                                event.target.result;
+                        };
+
+
+                    reader.onerror =
+                        function() {
+
+                            reject(
+                                new Error(
+                                    'Не удалось прочитать файл'
+                                )
+                            );
+                        };
+
+
+                    reader.readAsDataURL(file);
+                }
+            );
+        }
+
+
+        // ============================================================
+        // ВЫБОР ФОТОГРАФИИ
+        // ============================================================
+
+        fileInput.addEventListener(
+            'change',
+            async function(event) {
+
+                const file =
+                    event.target.files[0];
+
+
+                if (!file) {
+                    return;
+                }
+
+
+                currentPhotoBase64 =
+                    '';
+
+                currentPhotoDataUrl =
+                    '';
+
+
+                if (
+                    file.size >
+                    25 * 1024 * 1024
+                ) {
+
+                    showError(
+                        'Фотография слишком большая. Максимум 25 MB.'
+                    );
+
+                    fileInput.value =
+                        '';
+
+                    return;
+                }
+
+
+                try {
+
+                    showStatus(
+                        '⏳ Обрабатываю фотографию...',
+                        'loading'
+                    );
+
+
+                    photoOriginalSize =
+                        file.size;
+
+
+                    const result =
+                        await compressImage(file);
+
+
+                    currentPhotoBase64 =
+                        result.base64;
+
+
+                    currentPhotoDataUrl =
+                        result.dataUrl;
+
+
+                    photoCompressedSize =
+                        result.size;
+
+
+                    photoPreview.src =
+                        result.dataUrl;
+
+                    photoPreview.style.display =
+                        'block';
+
+
+                    photoInfo.textContent =
+                        result.width +
+                        '×' +
+                        result.height +
+                        ' • ' +
+                        formatBytes(file.size) +
+                        ' → ' +
+                        formatBytes(result.size);
+
+
+                    photoInfo.style.display =
+                        'block';
+
+
+                    showSuccess(
+                        '✅ Фото готово!'
+                    );
+
+
+                    setDebug(
+                        'Фото подготовлено\n' +
+                        'Исходный размер: ' +
+                        formatBytes(file.size) +
+                        '\n' +
+                        'После сжатия: ' +
+                        formatBytes(result.size) +
+                        '\n' +
+                        'Base64: ' +
+                        result.base64.length +
+                        ' символов'
+                    );
+
+
+                } catch (error) {
+
+                    console.error(
+                        'Ошибка обработки фото:',
+                        error
+                    );
+
+
+                    currentPhotoBase64 =
+                        '';
+
+                    showError(
+                        error.message ||
+                        'Ошибка обработки фотографии'
+                    );
+
+
+                    fileInput.value =
+                        '';
+                }
             }
-            
-            if (!currentPhotoBase64) {
-                showError('Сделайте фото!');
-                return;
+        );
+
+
+        // ============================================================
+        // ОТПРАВКА ФОТО
+        // ============================================================
+        //
+        // Вместо fetch/no-cors используется обычная HTML-форма
+        // в скрытый iframe.
+        //
+        // Это важно для GitHub Pages / file:// и других
+        // внешних страниц, откуда Apps Script не обязан
+        // разрешать CORS.
+        // ============================================================
+
+        function sendPhotoToGoogle(
+            name,
+            cell,
+            photoBase64
+        ) {
+
+            return new Promise(
+                function(resolve, reject) {
+
+                    const iframeName =
+                        'googleUploadFrame_' +
+                        Date.now();
+
+
+                    const iframe =
+                        document.createElement(
+                            'iframe'
+                        );
+
+
+                    iframe.name =
+                        iframeName;
+
+
+                    iframe.id =
+                        iframeName;
+
+
+                    iframe.style.display =
+                        'none';
+
+
+                    document.body.appendChild(
+                        iframe
+                    );
+
+
+                    const form =
+                        document.createElement(
+                            'form'
+                        );
+
+
+                    form.method =
+                        'POST';
+
+
+                    form.action =
+                        SCRIPT_URL;
+
+
+                    form.target =
+                        iframeName;
+
+
+                    form.style.display =
+                        'none';
+
+
+                    function addField(
+                        name,
+                        value
+                    ) {
+
+                        const input =
+                            document.createElement(
+                                'input'
+                            );
+
+                        input.type =
+                            'hidden';
+
+                        input.name =
+                            name;
+
+                        input.value =
+                            value || '';
+
+                        form.appendChild(
+                            input
+                        );
+                    }
+
+
+                    addField(
+                        'name',
+                        name
+                    );
+
+
+                    addField(
+                        'cell',
+                        cell
+                    );
+
+
+                    addField(
+                        'photo',
+                        photoBase64
+                    );
+
+
+                    document.body.appendChild(
+                        form
+                    );
+
+
+                    let completed =
+                        false;
+
+
+                    function cleanup() {
+
+                        if (
+                            form &&
+                            form.parentNode
+                        ) {
+
+                            form.parentNode.removeChild(
+                                form
+                            );
+                        }
+
+
+                        if (
+                            iframe &&
+                            iframe.parentNode
+                        ) {
+
+                            iframe.parentNode.removeChild(
+                                iframe
+                            );
+                        }
+                    }
+
+
+                    function success() {
+
+                        if (completed) {
+                            return;
+                        }
+
+
+                        completed =
+                            true;
+
+
+                        cleanup();
+
+
+                        resolve();
+                    }
+
+
+                    /*
+                     * Мы не читаем содержимое iframe —
+                     * это cross-origin.
+                     *
+                     * Сам факт завершения navigation
+                     * используем только как сигнал.
+                     */
+                    iframe.onload =
+                        function() {
+
+                            if (
+                                completed
+                            ) {
+                                return;
+                            }
+
+
+                            /*
+                             * Не считаем onload мгновенным
+                             * доказательством успеха.
+                             *
+                             * Проверку сделает загрузка списка
+                             * ниже.
+                             */
+
+                        };
+
+
+                    try {
+
+                        form.submit();
+
+                    } catch (error) {
+
+                        completed =
+                            true;
+
+                        cleanup();
+
+                        reject(error);
+
+                        return;
+                    }
+
+
+                    /*
+                     * Даём браузеру отправить POST.
+                     *
+                     * Apps Script создаёт файл и строку.
+                     * Потом мы проверяем это через JSONP.
+                     */
+
+                    setTimeout(
+                        success,
+                        1800
+                    );
+                }
+            );
+        }
+
+
+        // ============================================================
+        // СОХРАНЕНИЕ
+        // ============================================================
+
+        saveBtn.addEventListener(
+            'click',
+            async function() {
+
+                if (isSaving) {
+                    return;
+                }
+
+
+                const name =
+                    nameInput.value.trim();
+
+
+                const cell =
+                    cellInput.value.trim();
+
+
+                if (!name) {
+
+                    showError(
+                        'Введите название!'
+                    );
+
+                    nameInput.focus();
+
+                    return;
+                }
+
+
+                if (!cell) {
+
+                    showError(
+                        'Введите ячейку!'
+                    );
+
+                    cellInput.focus();
+
+                    return;
+                }
+
+
+                if (!currentPhotoBase64) {
+
+                    showError(
+                        'Сделайте фото!'
+                    );
+
+                    return;
+                }
+
+
+                isSaving =
+                    true;
+
+
+                saveBtn.disabled =
+                    true;
+
+                takePhotoBtn.disabled =
+                    true;
+
+                refreshBtn.disabled =
+                    true;
+
+
+                saveBtn.textContent =
+                    '⏳ Сохранение...';
+
+
+                showStatus(
+                    '⏳ Сохраняю фото в Google Drive...',
+                    'loading'
+                );
+
+
+                setDebug(
+                    'POST отправляется...\n' +
+                    'Название: ' +
+                    name +
+                    '\n' +
+                    'Ячейка: ' +
+                    cell +
+                    '\n' +
+                    'Base64: ' +
+                    currentPhotoBase64.length
+                );
+
+
+                try {
+
+                    await sendPhotoToGoogle(
+                        name,
+                        cell,
+                        currentPhotoBase64
+                    );
+
+
+                    showStatus(
+                        '⏳ Проверяю сохранение в Google Drive...',
+                        'loading'
+                    );
+
+
+                    /*
+                     * Проверяем появление записи.
+                     *
+                     * Несколько попыток нужны потому,
+                     * что Apps Script / Drive могут
+                     * выполнить операцию с задержкой.
+                     */
+
+                    verifySavedItem(
+                        name,
+                        0
+                    );
+
+
+                } catch (error) {
+
+                    console.error(
+                        'Ошибка POST:',
+                        error
+                    );
+
+
+                    finishSaveError(
+                        error.message ||
+                        String(error)
+                    );
+                }
             }
-            
-            saveBtn.disabled = true;
-            saveBtn.textContent = '⏳ Отправка...';
-            showStatus('⏳ Отправка на облачный склад...', 'loading');
-            
-            try {
-                const payload = {
-                    name: name,
-                    cell: cell,
-                    photo: currentPhotoBase64
+        );
+
+
+        // ============================================================
+        // ПРОВЕРКА ПОСЛЕ СОХРАНЕНИЯ
+        // ============================================================
+
+        function verifySavedItem(
+            expectedName,
+            attempt
+        ) {
+
+            loadInventoryJsonp(
+                function(items) {
+
+                    let found =
+                        false;
+
+
+                    for (
+                        let i =
+                            items.length - 1;
+                        i >= 0;
+                        i--
+                    ) {
+
+                        const item =
+                            items[i];
+
+
+                        const itemName =
+                            String(
+                                item['Название'] || ''
+                            ).trim();
+
+
+                        if (
+                            itemName ===
+                            expectedName
+                        ) {
+
+                            found =
+                                true;
+
+                            break;
+                        }
+                    }
+
+
+                    if (found) {
+
+                        finishSaveSuccess();
+
+                        return;
+                    }
+
+
+                    if (
+                        attempt <
+                        5
+                    ) {
+
+                        showStatus(
+                            '⏳ Google Drive ещё сохраняет фото...',
+                            'loading'
+                        );
+
+
+                        setTimeout(
+                            function() {
+
+                                verifySavedItem(
+                                    expectedName,
+                                    attempt + 1
+                                );
+
+                            },
+                            2500
+                        );
+
+
+                        return;
+                    }
+
+
+                    finishSaveError(
+                        'Запись не появилась в таблице после отправки. Проверь "Выполнения" в Apps Script.'
+                    );
+
+                },
+
+                function(error) {
+
+                    if (
+                        attempt <
+                        5
+                    ) {
+
+                        setTimeout(
+                            function() {
+
+                                verifySavedItem(
+                                    expectedName,
+                                    attempt + 1
+                                );
+
+                            },
+                            2500
+                        );
+
+                    } else {
+
+                        finishSaveError(
+                            'Не удалось проверить Google Sheets: ' +
+                            error
+                        );
+                    }
+                }
+            );
+        }
+
+
+        // ============================================================
+        // УСПЕШНОЕ СОХРАНЕНИЕ
+        // ============================================================
+
+        function finishSaveSuccess() {
+
+            isSaving =
+                false;
+
+
+            saveBtn.disabled =
+                false;
+
+            takePhotoBtn.disabled =
+                false;
+
+            refreshBtn.disabled =
+                false;
+
+
+            saveBtn.textContent =
+                '💾 Сохранить на склад';
+
+
+            showSuccess(
+                '✅ Фото и запись сохранены!'
+            );
+
+
+            nameInput.value =
+                '';
+
+            cellInput.value =
+                '';
+
+
+            photoPreview.src =
+                '';
+
+            photoPreview.style.display =
+                'none';
+
+
+            photoInfo.textContent =
+                '';
+
+            photoInfo.style.display =
+                'none';
+
+
+            currentPhotoBase64 =
+                '';
+
+            currentPhotoDataUrl =
+                '';
+
+
+            photoOriginalSize =
+                0;
+
+            photoCompressedSize =
+                0;
+
+
+            fileInput.value =
+                '';
+
+
+            loadInventory();
+        }
+
+
+        // ============================================================
+        // ОШИБКА СОХРАНЕНИЯ
+        // ============================================================
+
+        function finishSaveError(
+            message
+        ) {
+
+            isSaving =
+                false;
+
+
+            saveBtn.disabled =
+                false;
+
+            takePhotoBtn.disabled =
+                false;
+
+            refreshBtn.disabled =
+                false;
+
+
+            saveBtn.textContent =
+                '💾 Сохранить на склад';
+
+
+            showError(
+                message
+            );
+        }
+
+
+        // ============================================================
+        // JSONP ЗАГРУЗКА СПИСКА
+        // ============================================================
+        //
+        // Этот способ оставляем только для GET,
+        // потому что обычный script-запрос не требует CORS.
+        //
+        // Apps Script должен вернуть:
+        //
+        // callbackName({...});
+        //
+        // ============================================================
+
+        function loadInventoryJsonp(
+            onSuccess,
+            onError
+        ) {
+
+            onSuccess =
+                onSuccess ||
+                function() {};
+
+
+            onError =
+                onError ||
+                function() {};
+
+
+            // -----------------------------------------------
+            // Удаляем предыдущий запрос
+            // -----------------------------------------------
+
+            if (
+                currentLoadScript &&
+                currentLoadScript.parentNode
+            ) {
+
+                currentLoadScript.parentNode.removeChild(
+                    currentLoadScript
+                );
+            }
+
+
+            if (
+                currentCallbackName &&
+                window[currentCallbackName]
+            ) {
+
+                delete window[
+                    currentCallbackName
+                ];
+            }
+
+
+            const callbackName =
+                'stockCallback_' +
+                Date.now() +
+                '_' +
+                Math.floor(
+                    Math.random() * 100000
+                );
+
+
+            currentCallbackName =
+                callbackName;
+
+
+            const script =
+                document.createElement(
+                    'script'
+                );
+
+
+            currentLoadScript =
+                script;
+
+
+            let finished =
+                false;
+
+
+            function cleanup() {
+
+                if (finished) {
+                    return;
+                }
+
+
+                finished =
+                    true;
+
+
+                delete window[
+                    callbackName
+                ];
+
+
+                if (
+                    script.parentNode
+                ) {
+
+                    script.parentNode.removeChild(
+                        script
+                    );
+                }
+
+
+                if (
+                    currentLoadScript ===
+                    script
+                ) {
+
+                    currentLoadScript =
+                        null;
+                }
+
+
+                if (
+                    currentCallbackName ===
+                    callbackName
+                ) {
+
+                    currentCallbackName =
+                        null;
+                }
+            }
+
+
+            window[callbackName] =
+                function(response) {
+
+                    cleanup();
+
+
+                    if (
+                        !response
+                    ) {
+
+                        onError(
+                            'Пустой ответ Apps Script'
+                        );
+
+                        return;
+                    }
+
+
+                    if (
+                        response.success ===
+                        false
+                    ) {
+
+                        onError(
+                            response.error ||
+                            'Apps Script вернул ошибку'
+                        );
+
+                        return;
+                    }
+
+
+                    const items =
+                        Array.isArray(
+                            response.data
+                        )
+                            ? response.data
+                            : [];
+
+
+                    onSuccess(
+                        items
+                    );
                 };
-                
-                // Отправляем через fetch с no-cors
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(payload)
-                });
-                
-                // При no-cors мы не можем прочитать ответ, но запрос уходит!
-                showSuccess('✅ Отправлено! Проверь таблицу через 5 секунд.');
-                
-                // Очищаем форму
-                nameInput.value = '';
-                cellInput.value = '';
-                photoPreview.style.display = 'none';
-                currentPhotoBase64 = '';
-                fileInput.value = '';
-                
-                // Обновляем список через 5 секунд
-                setTimeout(loadInventoryJsonp, 5000);
-                
-            } catch (error) {
-                showError('Ошибка: ' + error.message);
-                console.error('Детали ошибки:', error);
-            }
-            
-            saveBtn.disabled = false;
-            saveBtn.textContent = '💾 Сохранить на склад';
-        });
-        
-        // ============================================================
-        // ЗАГРУЗКА СПИСКА (JSONP - обход CORS)
-        // ============================================================
-        function loadInventoryJsonp() {
-            inventoryDiv.innerHTML = '⏳ Загружаю список...';
-            countBadge.textContent = '';
-            
-            const callbackName = 'jsonpCallback_' + Date.now();
-            const script = document.createElement('script');
-            script.src = SCRIPT_URL + '?callback=' + callbackName + '&t=' + Date.now();
-            
-            window[callbackName] = function(data) {
-                delete window[callbackName];
-                if (script.parentNode) script.parentNode.removeChild(script);
-                
-                if (!data || !data.success) {
-                    inventoryDiv.innerHTML = `
-                        <div class="empty-state">
-                            <span class="icon">⚠️</span>
-                            Ошибка: ${data ? data.error : 'Нет данных'}
-                        </div>
-                    `;
-                    return;
-                }
-                
-                const items = data.data || [];
-                if (items.length === 0) {
-                    inventoryDiv.innerHTML = `
-                        <div class="empty-state">
-                            <span class="icon">📭</span>
-                            Склад пуст<br>
-                            <span style="font-size:13px;">Добавь первую хрень!</span>
-                        </div>
-                    `;
-                    countBadge.textContent = '0';
-                    return;
-                }
-                
-                countBadge.textContent = items.length;
-                
-                let html = '';
-                for (let i = items.length - 1; i >= 0; i--) {
-                    const item = items[i];
-                    const name = item['Название'] || 'Без имени';
-                    const cell = item['Ячейка'] || 'Не указана';
-                    const date = item['Дата добавления'] || '';
-                    const photoUrl = item['Ссылка на фото'] || '';
-                    
-                    const imgHtml = photoUrl 
-                        ? `<img src="${photoUrl}" alt="${name}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22%3E%3Crect width=%2260%22 height=%2260%22 fill=%22%23f0f2f5%22/%3E%3Ctext x=%2230%22 y=%2232%22 text-anchor=%22middle%22 font-size=%2224%22%3E📷%3C/text%3E%3C/svg%3E'" />` 
-                        : `<div style="width:60px;height:60px;background:#f0f2f5;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📷</div>`;
-                    
-                    html += `
-                        <div class="inventory-item">
-                            ${imgHtml}
-                            <div class="info">
-                                <div class="name">${escapeHtml(name)}</div>
-                                <span class="cell">📍 ${escapeHtml(cell)}</span>
-                                ${date ? `<span class="date">${escapeHtml(date)}</span>` : ''}
-                            </div>
-                        </div>
-                    `;
-                }
-                inventoryDiv.innerHTML = html;
-            };
-            
-            document.body.appendChild(script);
-            
-            setTimeout(() => {
-                if (window[callbackName]) {
-                    delete window[callbackName];
-                    if (script.parentNode) script.parentNode.removeChild(script);
-                    inventoryDiv.innerHTML = `
-                        <div class="empty-state">
-                            <span class="icon">⏰</span>
-                            Таймаут загрузки<br>
-                            <span style="font-size:13px;">Проверь интернет и нажми "Обновить"</span>
-                        </div>
-                    `;
-                }
-            }, 15000);
+
+
+            script.onerror =
+                function() {
+
+                    cleanup();
+
+
+                    onError(
+                        'Браузер не смог загрузить ответ Google Apps Script'
+                    );
+                };
+
+
+            /*
+             * ВАЖНО:
+             * callback добавляется к URL без /u/1/.
+             */
+
+            script.src =
+                SCRIPT_URL +
+                '?callback=' +
+                encodeURIComponent(
+                    callbackName
+                ) +
+                '&t=' +
+                Date.now();
+
+
+            document.body.appendChild(
+                script
+            );
+
+
+            // -----------------------------------------------
+            // Таймаут
+            // -----------------------------------------------
+
+            setTimeout(
+                function() {
+
+                    if (
+                        !finished
+                    ) {
+
+                        cleanup();
+
+
+                        onError(
+                            'Таймаут ответа Apps Script'
+                        );
+                    }
+
+                },
+                20000
+            );
         }
-        
+
+
         // ============================================================
-        // ЗАЩИТА ОТ XSS
+        // ЗАГРУЗКА СПИСКА
         // ============================================================
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
+
+        function loadInventory() {
+
+            if (isSaving) {
+                return;
+            }
+
+
+            refreshBtn.disabled =
+                true;
+
+
+            inventoryDiv.innerHTML =
+                '<div class="empty-state">' +
+                '<span class="icon">⏳</span>' +
+                'Загружаю список...' +
+                '</div>';
+
+
+            countBadge.textContent =
+                '';
+
+
+            setDebug(
+                'Загрузка списка...\n' +
+                SCRIPT_URL
+            );
+
+
+            loadInventoryJsonp(
+
+                function(items) {
+
+                    refreshBtn.disabled =
+                        false;
+
+
+                    renderInventory(
+                        items
+                    );
+                },
+
+
+                function(error) {
+
+                    refreshBtn.disabled =
+                        false;
+
+
+                    inventoryDiv.innerHTML =
+
+                        '<div class="empty-state">' +
+
+                        '<span class="icon">⚠️</span>' +
+
+                        'Не удалось загрузить список<br>' +
+
+                        '<span style="font-size:13px;">' +
+
+                        escapeHtml(
+                            error
+                        ) +
+
+                        '</span>' +
+
+                        '</div>';
+
+
+                    setDebug(
+                        'Ошибка загрузки списка:\n' +
+                        error
+                    );
+                }
+            );
+        }
+
+
+        // ============================================================
+        // ОТОБРАЖЕНИЕ
+        // ============================================================
+
+        function renderInventory(
+            items
+        ) {
+
+            if (
+                !items ||
+                items.length === 0
+            ) {
+
+                countBadge.textContent =
+                    '0';
+
+
+                inventoryDiv.innerHTML =
+
+                    '<div class="empty-state">' +
+
+                    '<span class="icon">📭</span>' +
+
+                    'Склад пуст<br>' +
+
+                    '<span style="font-size:13px;">' +
+
+                    'Добавь первую хрень!' +
+
+                    '</span>' +
+
+                    '</div>';
+
+                return;
+            }
+
+
+            countBadge.textContent =
+                items.length;
+
+
+            let html =
+                '';
+
+
+            for (
+                let i =
+                    items.length - 1;
+                i >= 0;
+                i--
+            ) {
+
+                const item =
+                    items[i];
+
+
+                const name =
+                    item['Название'] ||
+                    'Без имени';
+
+
+                const cell =
+                    item['Ячейка'] ||
+                    'Не указана';
+
+
+                const date =
+                    item['Дата добавления'] ||
+                    '';
+
+
+                const photoUrl =
+                    item['Ссылка на фото'] ||
+                    '';
+
+
+                let imgHtml;
+
+
+                if (
+                    photoUrl
+                ) {
+
+                    imgHtml =
+
+                        '<img ' +
+
+                        'src="' +
+                        escapeAttribute(
+                            photoUrl
+                        ) +
+                        '" ' +
+
+                        'alt="' +
+                        escapeAttribute(
+                            name
+                        ) +
+                        '" ' +
+
+                        'loading="lazy" ' +
+
+                        'onerror="' +
+                        'this.style.display=\'none\';' +
+                        'this.nextElementSibling.style.display=\'flex\';' +
+                        '"' +
+
+                        '>' +
+
+                        '<div ' +
+                        'class="image-placeholder" ' +
+                        'style="display:none;"' +
+                        '>' +
+
+                        '📷' +
+
+                        '</div>';
+
+                } else {
+
+                    imgHtml =
+
+                        '<div class="image-placeholder">' +
+
+                        '📷' +
+
+                        '</div>';
+                }
+
+
+                html +=
+
+                    '<div class="inventory-item">' +
+
+                    imgHtml +
+
+                    '<div class="info">' +
+
+                    '<div class="name">' +
+
+                    escapeHtml(
+                        name
+                    ) +
+
+                    '</div>' +
+
+                    '<span class="cell">' +
+
+                    '📍 ' +
+
+                    escapeHtml(
+                        cell
+                    ) +
+
+                    '</span>' +
+
+                    (
+                        date
+                            ? '<span class="date">' +
+                              escapeHtml(
+                                  date
+                              ) +
+                              '</span>'
+                            : ''
+                    ) +
+
+                    '</div>' +
+
+                    '</div>';
+            }
+
+
+            inventoryDiv.innerHTML =
+                html;
+        }
+
+
+        // ============================================================
+        // HTML ESCAPE
+        // ============================================================
+
+        function escapeHtml(
+            text
+        ) {
+
+            if (
+                text === null ||
+                text === undefined
+            ) {
+
+                return '';
+            }
+
+
+            const div =
+                document.createElement(
+                    'div'
+                );
+
+
+            div.textContent =
+                String(text);
+
+
             return div.innerHTML;
         }
-        
+
+
+        // ============================================================
+        // ATTRIBUTE ESCAPE
+        // ============================================================
+
+        function escapeAttribute(
+            text
+        ) {
+
+            if (
+                text === null ||
+                text === undefined
+            ) {
+
+                return '';
+            }
+
+
+            return String(text)
+
+                .replace(
+                    /&/g,
+                    '&amp;'
+                )
+
+                .replace(
+                    /"/g,
+                    '&quot;'
+                )
+
+                .replace(
+                    /'/g,
+                    '&#39;'
+                )
+
+                .replace(
+                    /</g,
+                    '&lt;'
+                )
+
+                .replace(
+                    />/g,
+                    '&gt;'
+                );
+        }
+
+
         // ============================================================
         // ОБНОВЛЕНИЕ
         // ============================================================
-        document.getElementById('refreshBtn').addEventListener('click', loadInventoryJsonp);
-        
+
+        refreshBtn.addEventListener(
+            'click',
+            function() {
+
+                loadInventory();
+            }
+        );
+
+
         // ============================================================
-        // ЗАПУСК
+        // СТАРТ
         // ============================================================
-        loadInventoryJsonp();
-        
-        if (SCRIPT_URL.includes('ТВОЙ_ИД_СКРИПТА')) {
-            inventoryDiv.innerHTML = `
-                <div class="empty-state">
-                    <span class="icon">⚙️</span>
-                    Настройка<br>
-                    <span style="font-size:13px;">Вставь SCRIPT_URL в код</span>
-                </div>
-            `;
-        }
+
+        window.addEventListener(
+            'load',
+            function() {
+
+                loadInventory();
+
+            }
+        );
+
     </script>
+
 </body>
 </html>
+```
